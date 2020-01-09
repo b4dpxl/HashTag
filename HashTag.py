@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#! /usr/bin/env python3
 """
 Name:           HashTag: Parse and Identify Password Hashes
 Version:        0.41
@@ -21,6 +21,7 @@ import mimetypes
 import os
 import shutil
 import string
+import sys
 
 parser = argparse.ArgumentParser(prog='HashTag.py', usage='%(prog)s {-sh hash |-f file |-d directory} [-o output_filename] [-hc] [-n]')
 argGroup = parser.add_mutually_exclusive_group(required=True)
@@ -257,20 +258,25 @@ if args.singleHash:
     Prints to screen all possible hash types and their corresponding hashcat mode if one exists.
     Note: When identifying a single hash on *nix operating systems remember to use single quotes to prevent interpolation. (e.g. python HashTag.py -sh '$1$abc$12345')
     """
+
+    if args.singleHash == '-':
+        args.singleHash = sys.stdin.read().strip()
+        print("Reading hash from STDIN")
+
     identifyHash(args.singleHash)
     if len(hashDict[args.singleHash]):
-        print '\nHash: {0}\n'.format(args.singleHash)
+        print('\nHash: {0}\n'.format(args.singleHash))
         for value in hashDict[args.singleHash]:
             hcFound = False
-            for k, v in hashcatDict.iteritems():
+            for k, v in hashcatDict.items():
                 if value == k:
-                    print '[*] {0} - Hashcat Mode {1}'.format(value, v)
+                    print('[*] {0} - Hashcat Mode {1}'.format(value, v))
                     hcFound = True
                     break
             if hcFound == False:
-                print '[*] {0}'.format(value)       
+                print('[*] {0}'.format(value)       )
     else:
-        print '\nHash not found: {0}'.format(args.singleHash)
+        print('\nHash not found: {0}'.format(args.singleHash))
 elif args.file:
     """
     File Parsing and Hash Identification: HashTag.py -f file.txt [-o output_filename] [-hc] [-n]
@@ -297,8 +303,8 @@ elif args.file:
         identifyHash(line.strip())
     
     if hashDict:
-        for k, v in hashDict.iteritems():
-            for mode, num in hashcatDict.iteritems():
+        for k, v in hashDict.items():
+            for mode, num in hashcatDict.items():
                 if mode in v:
                     hashcatMode = num
                     foundModes.append(num)
@@ -319,12 +325,12 @@ elif args.file:
             elif k and args.notFound:
                 outputFile.write('Hash: {0}\nChar Length: {1}\nHashcat Modes: {2}\nHash Types: {3}\n\n'.format(k, len(k), hashcatMode, 'NONE FOUND'))
 
-        print '\nFile Mimetype: {0}\nHashes Found: {1}\nFile successfully written: {2}'.format(mimetypes.guess_type(inputFile)[0], hashCount, outputFile.name)
+        print('\nFile Mimetype: {0}\nHashes Found: {1}\nFile successfully written: {2}'.format(mimetypes.guess_type(inputFile)[0], hashCount, outputFile.name))
 
         openInputFile.close()
         outputFile.close()
     else:
-        print '\nNo hashes parsed from file {0}'.format(inputFile)
+        print('\nNo hashes parsed from file {0}'.format(inputFile))
 elif args.directory:
     """
     File Parsing and Hash Identification while traversing directories and subdirectories: HashTag.py -d test_dir/hash_files/ [-o output_filename] [-hc]
@@ -374,7 +380,7 @@ elif args.directory:
                     validHashes.append(singleHash)
             openHashFile.close()
     else:
-        print 'No valid file formats found.'
+        print('No valid file formats found.')
 
     if validHashes:
         for singleHash in validHashes:
@@ -387,21 +393,21 @@ elif args.directory:
     validFileCount = len(validFiles) + nonTextFileCount
     invalidFileCount = len(invalidFiles)
 
-    print '\nTotal Hashes Found: {0}'.format(validHashCount)
-    print 'Valid file types: {0}'.format(validFileCount)
-    print 'Invalid file types: {0}'.format(invalidFileCount)
+    print('\nTotal Hashes Found: {0}'.format(validHashCount))
+    print('Valid file types: {0}'.format(validFileCount))
+    print('Invalid file types: {0}'.format(invalidFileCount))
 
     openInvalidFiles = open(os.path.join('HashTag','HashTag_Invalid_Files' + '.txt'), 'w')
     for invalidFile in invalidFiles:
         openInvalidFiles.write(invalidFile + '\n')
 
-    print '\nNow identifying {0} hashes from {1} files...'.format(validHashCount, validFileCount)
+    print('\nNow identifying {0} hashes from {1} files...'.format(validHashCount, validFileCount))
 
     notifyCount = 0
     tenPercentCount = (validHashCount / 10)
 
     if args.hashcatOutput:
-        for key, valueList in hashDict.iteritems():
+        for key, valueList in hashDict.items():
             if valueList:
                 for value in valueList:
                     if value in hashcatDict.iterkeys():
@@ -415,9 +421,9 @@ elif args.directory:
                         g.write(key + '\n')
             notifyCount += 1
             if (notifyCount % tenPercentCount) == 0:
-                print '{0}/{1} hashes have been identified and written.'.format(notifyCount,validHashCount)
+                print('{0}/{1} hashes have been identified and written.'.format(notifyCount,validHashCount))
     else:
-        for key, valueList in hashDict.iteritems():
+        for key, valueList in hashDict.items():
             if valueList:
                 for value in valueList:
                     with open(os.path.join('HashTag',value) + '.txt', "a") as f:
@@ -427,7 +433,7 @@ elif args.directory:
                     g.write(key + '\n')
             notifyCount += 1
             if (notifyCount % tenPercentCount) == 0:
-                print '{0}/{1} hashes have been identified and written.'.format(notifyCount,validHashCount)
+                print('{0}/{1} hashes have been identified and written.'.format(notifyCount,validHashCount))
 
-    print '\n{0} hashes have been identified and written to separate files based on hash type.\nA full list has been written to file {1}'.format(notifyCount, outputFile.name)
+    print('\n{0} hashes have been identified and written to separate files based on hash type.\nA full list has been written to file {1}'.format(notifyCount, outputFile.name))
     
